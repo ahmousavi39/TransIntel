@@ -173,17 +173,28 @@ Respond with ONLY the 2-letter code, nothing else.`;
     if (wordCount <= 2) {
       prompt = `Task: Analyze "${text}" (${sourceLang})
 
-Output format (STRICT - no additional text):
-Line 1: 2-3 ${sourceLang} synonyms (comma-separated)
-Line 2: TRANSLATIONS:
-Line 3: 3-4 ${targetLang} translations (semicolon-separated, ordered from most to least common)
+FIRST: Check if "${text}" is a valid word/phrase in ${sourceLang}.
 
-Example format:
+If INVALID/MISSPELLED:
+- Line 1: 2-4 similar correct ${sourceLang} words (comma-separated)
+- Line 2: NO_TRANSLATION
+- Do NOT provide translations for non-existent words
+
+If VALID:
+- Line 1: 2-3 ${sourceLang} synonyms (comma-separated)
+- Line 2: TRANSLATIONS:
+- Line 3: 3-4 ${targetLang} translations (semicolon-separated, ordered from most to least common)
+
+Example for invalid:
+hello, held, help, heel
+NO_TRANSLATION
+
+Example for valid:
 happy, joyful, cheerful
 TRANSLATIONS:
 feliz; contento; alegre
 
-Provide ONLY these 3 lines. No explanations, notes, or extra text.`;
+Provide ONLY the specified format. No explanations.`;
     } else {
       prompt = `Task: Professional translation from ${sourceLang} to ${targetLang}
 
@@ -218,7 +229,18 @@ Output: ONLY the translated text, no explanations or metadata.`;
         // Parse response to extract synonyms and translations
         let responseData = { translatedText: response.trim(), detectedLanguage: detectedLanguage };
         
-        if (wordCount <= 2 && response.includes('TRANSLATIONS:')) {
+        if (wordCount <= 2 && response.includes('NO_TRANSLATION')) {
+          // Word doesn't exist - return suggestions only
+          const lines = response.split('\n');
+          const suggestionsLine = lines[0].trim();
+          
+          responseData = {
+            translatedText: `Word not found. Did you mean one of these?`,
+            synonyms: suggestionsLine,
+            detectedLanguage: detectedLanguage,
+            noTranslation: true
+          };
+        } else if (wordCount <= 2 && response.includes('TRANSLATIONS:')) {
           const parts = response.split('TRANSLATIONS:');
           let synonymsLine = parts[0].trim();
           const translationsLine = parts[1].trim();

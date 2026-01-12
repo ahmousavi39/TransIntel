@@ -375,61 +375,81 @@ export default function TranslateScreen() {
 
       const data = await response.json();
       if (data.translatedText) {
-        // Parse synonyms if they exist
-        if (data.synonyms) {
-          const syns = data.synonyms
-            .split(',')
-            .map((s: string) => s.trim())
-            .filter((s: string) => {
-              // Filter out invalid or irrelevant synonyms
-              if (!s || s.length === 0) return false;
-              // Remove very long strings (likely not synonyms)
-              if (s.length > 50) return false;
-              // Remove entries that look like translations with semicolons
-              if (s.includes(';')) return false;
-              // Remove entries with excessive punctuation
-              const punctuationCount = (s.match(/[;:,]/g) || []).length;
-              if (punctuationCount > 2) return false;
-              return true;
-            })
-            .slice(0, 8); // Limit to 8 synonyms max
-          setSynonyms(syns);
-        } else {
-          setSynonyms([]);
-        }
-        
-        // Check if alternatives are provided separately
-        if (data.alternatives && Array.isArray(data.alternatives)) {
-          // Backend provides alternatives in a separate field
+        // Check if word doesn't exist (suggestions only)
+        if (data.noTranslation) {
+          // Word not found - show message and suggestions
           setTranslatedText(data.translatedText);
-          setAlternatives(data.alternatives.filter((alt: string) => alt && alt.trim()));
-        } else if (data.translatedText.includes(';')) {
-          // Parse alternatives from translatedText (separated by semicolons)
-          // First word/phrase is the main translation, rest are similar alternatives
-          const translations = data.translatedText
-            .split(';')
-            .map((t: string) => t.trim())
-            .filter((t: string) => t.length > 0 && t.length <= 100); // Filter out empty and very long strings
+          setAlternatives([]);
           
-          if (translations.length > 0) {
-            // Set the first translation as the main one
-            setTranslatedText(translations[0]);
+          // Parse suggestions
+          if (data.synonyms) {
+            const suggestions = data.synonyms
+              .split(',')
+              .map((s: string) => s.trim())
+              .filter((s: string) => s && s.length > 0)
+              .slice(0, 8);
+            setSynonyms(suggestions);
+          } else {
+            setSynonyms([]);
+          }
+        } else {
+          // Normal translation flow
+          // Parse synonyms if they exist
+          if (data.synonyms) {
+            const syns = data.synonyms
+              .split(',')
+              .map((s: string) => s.trim())
+              .filter((s: string) => {
+                // Filter out invalid or irrelevant synonyms
+                if (!s || s.length === 0) return false;
+                // Remove very long strings (likely not synonyms)
+                if (s.length > 50) return false;
+                // Remove entries that look like translations with semicolons
+                if (s.includes(';')) return false;
+                // Remove entries with excessive punctuation
+                const punctuationCount = (s.match(/[;:,]/g) || []).length;
+                if (punctuationCount > 2) return false;
+                return true;
+              })
+              .slice(0, 8); // Limit to 8 synonyms max
+            setSynonyms(syns);
+          } else {
+            setSynonyms([]);
+          }
+          
+          // Always check for semicolon-separated translations first
+          if (data.translatedText.includes(';')) {
+            // Parse alternatives from translatedText (separated by semicolons)
+            // First word/phrase is the main translation, rest are similar alternatives
+            const translations = data.translatedText
+              .split(';')
+              .map((t: string) => t.trim())
+              .filter((t: string) => t.length > 0 && t.length <= 100); // Filter out empty and very long strings
             
-            // Store remaining translations as alternatives (max 8 to avoid clutter)
-            if (translations.length > 1) {
-              setAlternatives(translations.slice(1, 9));
+            if (translations.length > 0) {
+              // Set the first translation as the main one
+              setTranslatedText(translations[0]);
+              
+              // Store remaining translations as alternatives (max 8 to avoid clutter)
+              if (translations.length > 1) {
+                setAlternatives(translations.slice(1, 9));
+              } else {
+                setAlternatives([]);
+              }
             } else {
+              // Fallback if filtering removed everything
+              setTranslatedText(data.translatedText);
               setAlternatives([]);
             }
+          } else if (data.alternatives && Array.isArray(data.alternatives)) {
+            // Backend provides alternatives in a separate field
+            setTranslatedText(data.translatedText);
+            setAlternatives(data.alternatives.filter((alt: string) => alt && alt.trim()));
           } else {
-            // Fallback if filtering removed everything
+            // No alternatives, just set the translation
             setTranslatedText(data.translatedText);
             setAlternatives([]);
           }
-        } else {
-          // No alternatives, just set the translation
-          setTranslatedText(data.translatedText);
-          setAlternatives([]);
         }
         
         // If language was auto-detected, update the source language
