@@ -359,23 +359,53 @@ app.get('/test-api', async (req, res) => {
 });
 
 // File text extraction endpoint
-app.post('/extract-text', upload.single('file'), async (req, res) => {
+app.post('/extract-text', (req, res, next) => {
+  upload.single('file')(req, res, (err) => {
+    if (err) {
+      console.error('Multer error:', err);
+      if (err.message === 'Unsupported file type') {
+        return res.status(400).json({ 
+          error: 'Unsupported file type',
+          details: 'Supported types: images (PNG, JPEG, WEBP, HEIC, HEIF), PDFs, and audio (MP3, WAV, AAC, FLAC, OGG, AIFF). Maximum file size: 10MB.'
+        });
+      }
+      if (err.code === 'LIMIT_FILE_SIZE') {
+        return res.status(400).json({ 
+          error: 'File too large',
+          details: 'Maximum file size is 10MB.'
+        });
+      }
+      return res.status(500).json({ 
+        error: 'File upload failed',
+        details: err.message 
+      });
+    }
+    next();
+  });
+}, async (req, res) => {
   let tempFilePath = null;
   let uploadedFile = null;
   
   try {
     console.log('=== File Upload Request ===');
+    console.log('Headers:', req.headers);
     console.log('Body:', req.body);
     console.log('File:', req.file);
     console.log('========================');
     
     if (!req.file) {
-      return res.status(400).json({ error: 'No file uploaded' });
+      console.error('No file in request');
+      return res.status(400).json({ 
+        error: 'No file uploaded',
+        details: 'Please select a file to upload.' 
+      });
     }
 
     if (!process.env.GEMINI_API_KEY) {
+      console.error('API key not configured');
       return res.status(500).json({ 
-        error: 'API key not configured' 
+        error: 'API key not configured',
+        details: 'Server configuration error. Please contact support.'
       });
     }
 
@@ -495,15 +525,36 @@ Output: ONLY the transcribed text, no timestamps or metadata.`;
     
   } catch (error) {
     console.error('Text extraction error:', error);
+    console.error('Error stack:', error.stack);
     
     // Clean up temp file on error
     if (tempFilePath && fs.existsSync(tempFilePath)) {
-      fs.unlinkSync(tempFilePath);
+      try {
+        fs.unlinkSync(tempFilePath);
+        console.log('Cleaned up temp file:', tempFilePath);
+      } catch (cleanupError) {
+        console.error('Failed to cleanup temp file:', cleanupError);
+      }
+    }
+    
+    // Provide more specific error messages
+    let errorMessage = 'Failed to extract text from file';
+    let errorDetails = error.message;
+    
+    if (error.message?.includes('API key')) {
+      errorMessage = 'Invalid API key';
+      errorDetails = 'Server API key is invalid or expired.';
+    } else if (error.message?.includes('quota')) {
+      errorMessage = 'API quota exceeded';
+      errorDetails = 'The server has reached its API quota limit. Please try again later.';
+    } else if (error.message?.includes('upload file')) {
+      errorMessage = 'File upload to processing service failed';
+      errorDetails = 'Could not upload file for processing. The file might be corrupted or in an unsupported format.';
     }
     
     res.status(500).json({ 
-      error: 'Failed to extract text from file',
-      details: error.message 
+      error: errorMessage,
+      details: errorDetails 
     });
   }
 });

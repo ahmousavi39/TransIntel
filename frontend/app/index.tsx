@@ -327,6 +327,20 @@ export default function TranslateScreen() {
           body: formData,
         });
 
+        // Check if response is OK before parsing JSON
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('Server error:', response.status, errorText);
+          throw new Error(`Server error: ${response.status}`);
+        }
+
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+          const text = await response.text();
+          console.error('Non-JSON response:', text);
+          throw new Error('Server returned invalid response');
+        }
+
         const data = await response.json();
         if (data.text) {
           setInputText(data.text);
@@ -344,9 +358,22 @@ export default function TranslateScreen() {
       }
     } catch (error) {
       console.error('File upload error:', error);
+      
+      let errorMessage = 'There was a problem uploading your file. Please check your internet connection and try again.';
+      
+      if (error instanceof Error) {
+        if (error.message.includes('Server error')) {
+          errorMessage = 'The server couldn\'t process this file. Please try a different file or check if the file type is supported.';
+        } else if (error.message.includes('invalid response')) {
+          errorMessage = 'The server is not responding correctly. Please make sure the backend server is running.';
+        } else if (error.message.includes('Network')) {
+          errorMessage = 'Cannot connect to server. Please check if the backend is running on the correct address.';
+        }
+      }
+      
       Alert.alert(
         'Upload Failed',
-        'There was a problem uploading your file. Please check your internet connection and try again.',
+        errorMessage,
         [{ text: 'OK' }]
       );
       setExtracting(false);
@@ -577,8 +604,49 @@ export default function TranslateScreen() {
                         <TouchableOpacity
                           key={index}
                           style={[styles.synonymChip, { backgroundColor: theme.inputBackground }]}
-                          onPress={() => {
+                          onPress={async () => {
+                            // Set the word and translate immediately
                             setInputText(syn);
+                            setTranslating(true);
+                            
+                            try {
+                              const response = await fetch(`${getApiUrl()}/translate`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                  text: syn,
+                                  sourceLanguage,
+                                  targetLanguage,
+                                }),
+                              });
+                              
+                              const data = await response.json();
+                              if (data.translatedText) {
+                                // Parse the translation response
+                                if (data.translatedText.includes(';')) {
+                                  const translations = data.translatedText
+                                    .split(';')
+                                    .map((t: string) => t.trim())
+                                    .filter((t: string) => t.length > 0);
+                                  
+                                  if (translations.length > 0) {
+                                    setTranslatedText(translations[0]);
+                                    if (translations.length > 1) {
+                                      setAlternatives(translations.slice(1, 9));
+                                    } else {
+                                      setAlternatives([]);
+                                    }
+                                  }
+                                } else {
+                                  setTranslatedText(data.translatedText);
+                                  setAlternatives([]);
+                                }
+                              }
+                            } catch (error) {
+                              console.error('Translation error:', error);
+                            } finally {
+                              setTranslating(false);
+                            }
                           }}
                         >
                           <Text style={[
@@ -613,7 +681,8 @@ export default function TranslateScreen() {
                   <Text style={[
                     styles.outputText, 
                     { color: theme.text },
-                    isRTL(targetLanguage) && { textAlign: 'right', writingDirection: 'rtl' }
+                    // Only apply RTL if it's not an error message
+                    isRTL(targetLanguage) && !translatedText.includes('Word not found') && { textAlign: 'right', writingDirection: 'rtl' }
                   ]}>
                     {translatedText || '...'}
                   </Text>
@@ -629,8 +698,66 @@ export default function TranslateScreen() {
                         <TouchableOpacity
                           key={index}
                           style={[styles.synonymChip, { backgroundColor: theme.inputBackground }]}
-                          onPress={() => {
-                            setTranslatedText(alt);
+                          onPress={async () => {
+                            // Swap languages and translate the selected alternative
+                            const newSource = targetLanguage;
+                            const newTarget = sourceLanguage;
+                            
+                            setSourceLanguage(newSource);
+                            setTargetLanguage(newTarget);
+                            setInputText(alt);
+                            setTranslating(true);
+                            
+                            try {
+                              const response = await fetch(`${getApiUrl()}/translate`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                  text: alt,
+                                  sourceLanguage: newSource,
+                                  targetLanguage: newTarget,
+                                }),
+                              });
+                              
+                              const data = await response.json();
+                              if (data.translatedText) {
+                                // Parse synonyms if they exist
+                                if (data.synonyms) {
+                                  const syns = data.synonyms
+                                    .split(',')
+                                    .map((s: string) => s.trim())
+                                    .filter((s: string) => s && !s.includes(';') && s.length <= 50)
+                                    .slice(0, 8);
+                                  setSynonyms(syns);
+                                } else {
+                                  setSynonyms([]);
+                                }
+                                
+                                // Parse translations
+                                if (data.translatedText.includes(';')) {
+                                  const translations = data.translatedText
+                                    .split(';')
+                                    .map((t: string) => t.trim())
+                                    .filter((t: string) => t.length > 0);
+                                  
+                                  if (translations.length > 0) {
+                                    setTranslatedText(translations[0]);
+                                    if (translations.length > 1) {
+                                      setAlternatives(translations.slice(1, 9));
+                                    } else {
+                                      setAlternatives([]);
+                                    }
+                                  }
+                                } else {
+                                  setTranslatedText(data.translatedText);
+                                  setAlternatives([]);
+                                }
+                              }
+                            } catch (error) {
+                              console.error('Translation error:', error);
+                            } finally {
+                              setTranslating(false);
+                            }
                           }}
                         >
                           <Text style={[
