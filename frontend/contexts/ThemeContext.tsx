@@ -45,10 +45,7 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
 
   const theme = isDark ? darkTheme : lightTheme;
 
-  if (isLoading) {
-    return null; // Or a loading screen
-  }
-
+  // Don't block rendering - provide theme immediately
   return (
     <ThemeContext.Provider value={{ theme, isDark, toggleTheme }}>
       {children}

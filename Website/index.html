@@ -3,85 +3,256 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Your App Name</title>
-    <link rel="icon" href="icon.png" type="image/png">
-    <link rel="apple-touch-icon" href="icon.png">
+    <title>TransIntel - Intelligent Translation App</title>
+    <meta name="description" content="Powerful translation app supporting 110+ languages with AI-powered features">
     <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            line-height: 1.6;
+        * {
             margin: 0;
-            padding: 20px;
-            background-color: #f5f5f5;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            line-height: 1.6;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: #333;
+            min-height: 100vh;
         }
-        .hero {
-            max-width: 800px;
-            margin: 40px auto 20px;
-            text-align: center;
-        }
-        .hero .logo {
-            width: 128px;
-            height: 128px;
-            border-radius: 28px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.12);
-        }
-        .hero h1 {
-            margin: 18px 0 8px;
-            font-size: 36px;
-            color: #2c3e50;
-        }
-        .hero p {
-            margin: 0 0 18px;
-            color: #7f8c8d;
-        }
-        .hero .appstore-badge img {
-            height: 50px;
-        }
+        
         .container {
-            max-width: 720px;
+            max-width: 1200px;
             margin: 0 auto;
-            background: #fff;
-            padding: 32px;
-            border-radius: 12px;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+            padding: 20px;
+        }
+        
+        header {
             text-align: center;
+            padding: 60px 20px;
+            color: white;
         }
-        .links {
+        
+        header h1 {
+            font-size: 3em;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+        
+        header p {
+            font-size: 1.3em;
+            opacity: 0.9;
+        }
+        
+        .features {
+            background: white;
+            border-radius: 20px;
+            padding: 60px 40px;
+            margin: 40px 0;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+        
+        .features h2 {
+            text-align: center;
+            font-size: 2.5em;
+            margin-bottom: 50px;
+            color: #667eea;
+        }
+        
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
+            margin-top: 40px;
+        }
+        
+        .feature-card {
+            padding: 30px;
+            background: #f8f9fa;
+            border-radius: 15px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.2);
+        }
+        
+        .feature-icon {
+            font-size: 3em;
+            margin-bottom: 15px;
+        }
+        
+        .feature-card h3 {
+            font-size: 1.5em;
+            margin-bottom: 10px;
+            color: #667eea;
+        }
+        
+        .feature-card p {
+            color: #666;
+            line-height: 1.8;
+        }
+        
+        .cta {
+            text-align: center;
+            padding: 60px 20px;
+            background: white;
+            border-radius: 20px;
+            margin: 40px 0;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+        
+        .cta h2 {
+            font-size: 2.5em;
+            margin-bottom: 20px;
+            color: #667eea;
+        }
+        
+        .cta p {
+            font-size: 1.2em;
+            color: #666;
+            margin-bottom: 30px;
+        }
+        
+        footer {
+            text-align: center;
+            padding: 40px 20px;
+            color: white;
+        }
+        
+        footer a {
+            color: white;
+            text-decoration: none;
+            margin: 0 15px;
+            opacity: 0.9;
+            transition: opacity 0.3s ease;
+        }
+        
+        footer a:hover {
+            opacity: 1;
+            text-decoration: underline;
+        }
+        
+        .stats {
             display: flex;
-            justify-content: center;
-            gap: 16px;
+            justify-content: space-around;
             flex-wrap: wrap;
-            margin-top: 16px;
+            gap: 20px;
+            margin: 40px 0;
         }
-        .links a {
-            display: inline-block;
-            padding: 4px 20px;
-            color: #3498db;
-            font-weight: 600;
+        
+        .stat {
+            text-align: center;
+            padding: 20px;
         }
-        .links a:hover {
-            color: #1e628f;
+        
+        .stat-number {
+            font-size: 3em;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .stat-label {
+            font-size: 1.2em;
+            color: #666;
+            margin-top: 10px;
+        }
+        
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 2em;
+            }
+            
+            header p {
+                font-size: 1.1em;
+            }
+            
+            .features h2, .cta h2 {
+                font-size: 1.8em;
+            }
+            
+            .features, .cta {
+                padding: 40px 20px;
+            }
         }
     </style>
 </head>
 <body>
-    <header class="hero">
-        <img src="icon.png" alt="App Logo" class="logo">
-        <h1>Your App Name</h1>
-        <p>Your app description goes here. Update this in index.html</p>
-        <!-- Uncomment and update when you have App Store link -->
-        <!-- <a class="appstore-badge" href="YOUR_APP_STORE_LINK" target="_blank" rel="noopener">
-            <img src="https://tools.applemediaservices.com/api/badges/download-on-the-app-store/black/en-us?size=250x83" alt="Download on the App Store">
-        </a> -->
-    </header>
-    <main class="container">
-        <h2>Need the legal details?</h2>
-        <p>Review our terms and privacy policy anytime.</p>
-        <div class="links">
-            <a href="terms.html">Terms of Use</a>
-            <a href="policy.html">Privacy Policy</a>
+    <div class="container">
+        <header>
+            <h1>🌍 TransIntel</h1>
+            <p>Intelligent Translation Powered by AI</p>
+        </header>
+
+        <div class="features">
+            <h2>Features That Make Translation Effortless</h2>
+            
+            <div class="stats">
+                <div class="stat">
+                    <div class="stat-number">110+</div>
+                    <div class="stat-label">Languages</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-number">AI</div>
+                    <div class="stat-label">Powered</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-number">∞</div>
+                    <div class="stat-label">Translations</div>
+                </div>
+            </div>
+            
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">🔍</div>
+                    <h3>Auto-Detection</h3>
+                    <p>Automatically detects the source language, so you can focus on what matters.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">💡</div>
+                    <h3>Smart Alternatives</h3>
+                    <p>Get multiple translation options with synonym suggestions for better understanding.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">📄</div>
+                    <h3>File Translation</h3>
+                    <p>Translate text from images, PDFs, audio files, and text documents instantly.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">🌐</div>
+                    <h3>RTL Support</h3>
+                    <p>Full support for right-to-left languages like Arabic, Hebrew, and Persian.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">⚡</div>
+                    <h3>Lightning Fast</h3>
+                    <p>Powered by Google Gemini AI for accurate and quick translations.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">🎨</div>
+                    <h3>Beautiful Design</h3>
+                    <p>Clean, modern interface with dark mode support for comfortable usage.</p>
+                </div>
+            </div>
         </div>
-    </main>
+
+        <div class="cta">
+            <h2>Ready to Break Language Barriers?</h2>
+            <p>Start translating in 110+ languages with AI-powered accuracy</p>
+        </div>
+    </div>
+
+    <footer>
+        <p>© 2026 TransIntel by Amir Hossain Mousavi. All rights reserved.</p>
+        <div>
+            <a href="policy.html">Privacy Policy</a>
+            <a href="terms.html">Terms of Use</a>
+        </div>
+    </footer>
 </body>
 </html>

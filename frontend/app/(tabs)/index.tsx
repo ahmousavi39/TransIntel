@@ -44,7 +44,7 @@ export default function TranslateScreen() {
     
     setLoading(true);
     try {
-      const response = await fetch('http://localhost:3001/translate', {
+      const response = await fetch('https://transintel.onrender.com/translate', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -3,127 +3,136 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Privacy Policy - Your App Name</title>
-    <link rel="icon" href="icon.png" type="image/png">
+    <title>Privacy Policy - TransIntel</title>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             line-height: 1.6;
-            margin: 20px;
+            margin: 0;
+            padding: 20px;
+            background-color: #f8f9fa;
             color: #333;
-        }
-        .hero {
-            max-width: 800px;
-            margin: 30px auto;
-            text-align: center;
-        }
-        .hero .logo {
-            width: 100px;
-            height: 100px;
-            border-radius: 24px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.12);
-        }
-        .appstore-badge img {
-            height: 48px;
         }
         .container {
             max-width: 800px;
             margin: 0 auto;
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
         h1 {
-            color: #2c3e50;
-            border-bottom: 2px solid #3498db;
-            padding-bottom: 10px;
+            color: #667eea;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 15px;
+            margin-bottom: 30px;
         }
         h2 {
             color: #34495e;
             margin-top: 30px;
+            margin-bottom: 15px;
         }
         .effective-date {
-            background-color: #f8f9fa;
-            padding: 10px;
-            border-left: 4px solid #3498db;
+            background-color: #e8f4f8;
+            padding: 15px;
+            border-left: 4px solid #667eea;
+            margin-bottom: 30px;
+            border-radius: 5px;
+        }
+        ul {
+            margin-left: 20px;
+        }
+        li {
+            margin-bottom: 10px;
+        }
+        a {
+            color: #667eea;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        .back-link {
+            display: inline-block;
             margin-bottom: 20px;
+            color: #667eea;
         }
     </style>
 </head>
 <body>
-    <div class="hero">
-        <img src="icon.png" alt="App Logo" class="logo">
-    </div>
     <div class="container">
+        <a href="index.html" class="back-link">← Back to Home</a>
+        
         <h1>Privacy Policy</h1>
         
         <div class="effective-date">
-            <strong>Effective Date:</strong> January 3, 2026
+            <strong>Effective Date:</strong> January 8, 2026
         </div>
 
         <h2>1. Information We Collect</h2>
-        <p>Your App Name ("we," "our," or "us") collects the following information:</p>
+        <p>TransIntel ("we," "our," or "us") is committed to protecting your privacy. We collect minimal information:</p>
         <ul>
-            <li><strong>Device Information:</strong> Device type, operating system, and app usage analytics</li>
-            <li><strong>Local Data:</strong> App data and preferences stored locally on your device</li>
-            <li><strong>Purchase Information:</strong> Limited transaction metadata related to purchases (e.g., store purchase token, transaction ID, product ID, country). We do <em>not</em> collect or store raw payment card numbers or billing details; these are handled securely by the app store.</li>
+            <li><strong>Translation Text:</strong> Text you input for translation is sent to our servers temporarily for processing and is not stored permanently</li>
+            <li><strong>Uploaded Files:</strong> Files you upload for translation are processed temporarily and deleted immediately after extraction</li>
+            <li><strong>Language Preferences:</strong> Your preferred source and target languages are stored locally on your device</li>
+            <li><strong>Theme Preference:</strong> Your light/dark mode preference is stored locally on your device</li>
         </ul>
 
         <h2>2. How We Use Your Information</h2>
-        <p>We use your information to:</p>
+        <p>We use your information solely to:</p>
         <ul>
-            <li>Provide and improve our app services</li>
-            <li>Save your app progress and preferences</li>
-            <li>Validate your purchases and maintain your access</li>
-            <li>Analyze app usage to improve functionality</li>
+            <li>Provide translation services using Google Gemini AI</li>
+            <li>Extract text from uploaded files (images, PDFs, audio)</li>
+            <li>Save your app preferences locally for a better user experience</li>
+        </ul>
+        <p><strong>We do not:</strong></p>
+        <ul>
+            <li>Store your translations or uploaded files on our servers</li>
+            <li>Sell, trade, or share your data with third parties for marketing</li>
+            <li>Track your usage beyond basic analytics</li>
         </ul>
 
-        <h2>2.1 Pricing (Update as needed)</h2>
-        <p>This app is offered under a <strong>one-time purchase model of €4.99</strong> (update with your pricing). Upon successful purchase you receive:</p>
+        <h2>3. Third-Party Services</h2>
+        <p>TransIntel uses the following third-party service:</p>
         <ul>
-            <li><strong>Lifetime access</strong> to the app and all features</li>
-            <li>Access to all current and future updates</li>
-            <li>Eligibility for non-paid feature updates and stability improvements</li>
-        </ul>
-        <p>The purchase is processed by the respective app store. We only store the minimal purchase token necessary to verify entitlement and prevent fraud.</p>
-
-        <h2>3. Information Sharing</h2>
-        <p>We do not sell, trade, or rent your personal information to third parties. All app data is stored locally on your device. We may share information only in the following circumstances:</p>
-        <ul>
-            <li>With your explicit consent</li>
-            <li>To comply with legal obligations</li>
-            <li>With service providers who help us operate our app (under strict confidentiality agreements)</li>
-            <li>With app store/platform providers for purchase validation and fraud prevention</li>
+            <li><strong>Google Gemini AI:</strong> For translation and text extraction. Your data is processed according to <a href="https://policies.google.com/privacy" target="_blank">Google's Privacy Policy</a></li>
         </ul>
 
         <h2>4. Data Security</h2>
-        <p>We implement appropriate security measures to protect your personal information against unauthorized access, alteration, disclosure, or destruction. Your data is encrypted in transit and at rest.</p>
+        <p>We implement appropriate security measures:</p>
+        <ul>
+            <li>All data transmission is encrypted using HTTPS</li>
+            <li>Uploaded files are processed in memory and deleted immediately</li>
+            <li>No permanent storage of user translations or files</li>
+            <li>Local storage uses secure AsyncStorage</li>
+        </ul>
 
         <h2>5. Data Retention</h2>
-        <p>All app data is stored locally on your device and can be cleared through the app's settings or by uninstalling the app. Purchase verification tokens may be retained to uphold your license and prevent fraud. You may request deletion of your account and associated data at any time (subject to minimal retention required for purchase verification and fraud prevention).</p>
+        <p>TransIntel follows a minimal data retention policy:</p>
+        <ul>
+            <li>Translation requests are not logged or stored</li>
+            <li>Uploaded files are deleted immediately after processing</li>
+            <li>Local preferences remain on your device until you delete the app</li>
+        </ul>
 
         <h2>6. Your Rights</h2>
         <p>You have the right to:</p>
         <ul>
-            <li>Access your personal information</li>
-            <li>Correct inaccurate data</li>
-            <li>Request deletion of your data</li>
-            <li>Reset your app data at any time through the app settings</li>
+            <li>Clear all locally stored preferences through the app settings</li>
+            <li>Delete all app data by uninstalling the application</li>
+            <li>Use the app without creating an account</li>
         </ul>
 
         <h2>7. Children's Privacy</h2>
-        <p>Our service is not intended for children under 13. We do not knowingly collect personal information from children under 13.</p>
+        <p>TransIntel does not knowingly collect personal information from children under 13. The app is designed for general audiences.</p>
 
         <h2>8. Changes to This Policy</h2>
-        <p>We may update this privacy policy from time to time. We will notify you of any changes by posting the new policy on this page.</p>
+        <p>We may update this Privacy Policy from time to time. Any changes will be posted on this page with an updated effective date.</p>
 
         <h2>9. Contact Us</h2>
-        <p>If you have any questions about this Privacy Policy, please contact us at:</p>
-        <p><strong>Email:</strong> your-email@example.com</p>
-        <p><strong>Address:</strong> Your Address Here</p>
-        <p><strong>Phone:</strong> Your Phone Number</p>
-        
-        <hr style="margin-top: 40px;">
-        <p style="text-align: center; color: #666; font-size: 14px;">
-            © 2026 Your App Name. All rights reserved.
-        </p>
+        <p>If you have questions about this Privacy Policy, please contact us at: <a href="mailto:a.h.mousavi39official@gmail.com">a.h.mousavi39official@gmail.com</a></p>
+
+        <p style="margin-top: 40px; color: #999; font-size: 14px;">© 2026 TransIntel by Amir Hossain Mousavi. All rights reserved.</p>
     </div>
 </body>
 </html>

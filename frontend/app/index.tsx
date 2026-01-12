@@ -10,7 +10,7 @@ import { storageService } from '@/services/storage';
 const getApiUrl = () => {
   // Use your computer's local network IP address
   // This works for all platforms: web, iOS simulator, Android emulator, and physical devices
-  return 'http://192.168.2.107:3001';
+  return 'https://transintel.onrender.com';
 };
 
 const LANGUAGES = [
@@ -209,6 +209,30 @@ export default function TranslateScreen() {
     loadLanguagePreferences();
   }, []);
 
+  // Track if we should skip the next reset (when setting from API)
+  const skipResetRef = useRef<boolean>(false);
+
+  // Reset similar sections whenever translated text changes
+  useEffect(() => {
+    if (skipResetRef.current) {
+      skipResetRef.current = false;
+      return;
+    }
+    // Reset both alternatives and synonyms when translation changes
+    if (translatedText) {
+      setAlternatives([]);
+      setSynonyms([]);
+    }
+  }, [translatedText]);
+
+  // Reset similar sections whenever input text changes (user is editing)
+  useEffect(() => {
+    // Reset alternatives, synonyms, and translated text when input changes
+    setAlternatives([]);
+    setSynonyms([]);
+    setTranslatedText('');
+  }, [inputText]);
+
   const getLanguageName = (code: string) => {
     return LANGUAGES.find(lang => lang.code === code)?.name || code;
   };
@@ -269,7 +293,11 @@ export default function TranslateScreen() {
       
       // Check file size (10MB limit)
       if (file.size && file.size > 10 * 1024 * 1024) {
-        Alert.alert('Error', 'File size must be less than 10MB');
+        Alert.alert(
+          'File Too Large',
+          'The selected file is too large. Please choose a file smaller than 10MB.',
+          [{ text: 'OK' }]
+        );
         return;
       }
       
@@ -306,13 +334,21 @@ export default function TranslateScreen() {
           // Automatically translate the extracted text
           await handleTranslate(data.text);
         } else if (data.error) {
-          Alert.alert('Error', `Could not extract text: ${data.error}`);
+          Alert.alert(
+            'Extraction Failed',
+            'We couldn\'t extract text from this file. Please make sure the file contains readable text or try a different file.',
+            [{ text: 'OK' }]
+          );
           setExtracting(false);
         }
       }
     } catch (error) {
       console.error('File upload error:', error);
-      Alert.alert('Error', 'Could not read file');
+      Alert.alert(
+        'Upload Failed',
+        'There was a problem uploading your file. Please check your internet connection and try again.',
+        [{ text: 'OK' }]
+      );
       setExtracting(false);
     }
   };
@@ -323,6 +359,7 @@ export default function TranslateScreen() {
     if (!text?.trim()) return;
     
     setTranslating(true);
+    skipResetRef.current = true;
     try {
       const response = await fetch(`${getApiUrl()}/translate`, {
         method: 'POST',
@@ -340,20 +377,58 @@ export default function TranslateScreen() {
       if (data.translatedText) {
         // Parse synonyms if they exist
         if (data.synonyms) {
-          const syns = data.synonyms.split(',').map((s: string) => s.trim()).filter((s: string) => s);
+          const syns = data.synonyms
+            .split(',')
+            .map((s: string) => s.trim())
+            .filter((s: string) => {
+              // Filter out invalid or irrelevant synonyms
+              if (!s || s.length === 0) return false;
+              // Remove very long strings (likely not synonyms)
+              if (s.length > 50) return false;
+              // Remove entries that look like translations with semicolons
+              if (s.includes(';')) return false;
+              // Remove entries with excessive punctuation
+              const punctuationCount = (s.match(/[;:,]/g) || []).length;
+              if (punctuationCount > 2) return false;
+              return true;
+            })
+            .slice(0, 8); // Limit to 8 synonyms max
           setSynonyms(syns);
         } else {
           setSynonyms([]);
         }
         
-        // Parse alternatives if they exist (separated by semicolons)
-        const translations = data.translatedText.split(';').map((t: string) => t.trim());
-        setTranslatedText(translations[0]);
-        
-        // Store alternatives if there are more than one
-        if (translations.length > 1) {
-          setAlternatives(translations.slice(1));
+        // Check if alternatives are provided separately
+        if (data.alternatives && Array.isArray(data.alternatives)) {
+          // Backend provides alternatives in a separate field
+          setTranslatedText(data.translatedText);
+          setAlternatives(data.alternatives.filter((alt: string) => alt && alt.trim()));
+        } else if (data.translatedText.includes(';')) {
+          // Parse alternatives from translatedText (separated by semicolons)
+          // First word/phrase is the main translation, rest are similar alternatives
+          const translations = data.translatedText
+            .split(';')
+            .map((t: string) => t.trim())
+            .filter((t: string) => t.length > 0 && t.length <= 100); // Filter out empty and very long strings
+          
+          if (translations.length > 0) {
+            // Set the first translation as the main one
+            setTranslatedText(translations[0]);
+            
+            // Store remaining translations as alternatives (max 8 to avoid clutter)
+            if (translations.length > 1) {
+              setAlternatives(translations.slice(1, 9));
+            } else {
+              setAlternatives([]);
+            }
+          } else {
+            // Fallback if filtering removed everything
+            setTranslatedText(data.translatedText);
+            setAlternatives([]);
+          }
         } else {
+          // No alternatives, just set the translation
+          setTranslatedText(data.translatedText);
           setAlternatives([]);
         }
         
@@ -368,7 +443,12 @@ export default function TranslateScreen() {
       }
     } catch (error) {
       console.error('Translation error:', error);
-      setTranslatedText('Error: Could not connect to backend server.\n\nMake sure:\n1. Backend is running (cd backend && npm run dev)\n2. Server is on port 3001\n3. For physical devices, update API_URL in the code with your computer IP');
+      setTranslatedText('');
+      Alert.alert(
+        'Translation Failed',
+        'We couldn\'t connect to the translation service. Please check your internet connection and try again.',
+        [{ text: 'OK' }]
+      );
     } finally {
       setTranslating(false);
     }
@@ -469,18 +549,23 @@ export default function TranslateScreen() {
                 {synonyms.length > 0 && (
                   <View style={styles.synonymsContainer}>
                     <Text style={[styles.synonymsTitle, { color: theme.textSecondary }]}>Similar:</Text>
-                    <View style={styles.synonymsRow}>
+                    <View style={[
+                      styles.synonymsRow,
+                      isRTL(sourceLanguage) && { flexDirection: 'row-reverse' }
+                    ]}>
                       {synonyms.map((syn, index) => (
                         <TouchableOpacity
                           key={index}
                           style={[styles.synonymChip, { backgroundColor: theme.inputBackground }]}
                           onPress={() => {
                             setInputText(syn);
-                            setSynonyms([]);
-                            setAlternatives([]);
                           }}
                         >
-                          <Text style={[styles.synonymText, { color: theme.text }]}>{syn}</Text>
+                          <Text style={[
+                            styles.synonymText, 
+                            { color: theme.text },
+                            isRTL(sourceLanguage) && { writingDirection: 'rtl' }
+                          ]}>{syn}</Text>
                         </TouchableOpacity>
                       ))}
                     </View>
@@ -515,18 +600,24 @@ export default function TranslateScreen() {
                 </ScrollView>
                 {alternatives.length > 0 && (
                   <View style={styles.synonymsContainer}>
-                    <Text style={[styles.synonymsTitle, { color: theme.textSecondary }]}>Similar:</Text>
-                    <View style={styles.synonymsRow}>
+                    <Text style={[styles.synonymsTitle, { color: theme.textSecondary }]}>Also translated as:</Text>
+                    <View style={[
+                      styles.synonymsRow,
+                      isRTL(targetLanguage) && { flexDirection: 'row-reverse' }
+                    ]}>
                       {alternatives.map((alt, index) => (
                         <TouchableOpacity
                           key={index}
                           style={[styles.synonymChip, { backgroundColor: theme.inputBackground }]}
                           onPress={() => {
                             setTranslatedText(alt);
-                            setAlternatives(alternatives.filter((_, i) => i !== index));
                           }}
                         >
-                          <Text style={[styles.synonymText, { color: theme.text }]}>{alt}</Text>
+                          <Text style={[
+                            styles.synonymText, 
+                            { color: theme.text },
+                            isRTL(targetLanguage) && { writingDirection: 'rtl' }
+                          ]}>{alt}</Text>
                         </TouchableOpacity>
                       ))}
                     </View>

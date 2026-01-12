@@ -1,0 +1,60 @@
+{
+  "expo": {
+    "name": "TransIntel",
+    "slug": "transintel",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "scheme": "transintel",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#333333"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.ahmousavi.transintel",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false,
+        "UIBackgroundModes": [],
+        "NSPhotoLibraryUsageDescription": "This app needs access to your photo library to select documents.",
+        "NSCameraUsageDescription": "This app needs access to your camera to take photos of documents."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#b93ec7"
+      },
+      "package": "com.ahmousavi.transintel"
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static",
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 200,
+          "resizeMode": "contain",
+          "backgroundColor": "#333333"
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "fb23654c-117b-441a-9199-83a3809a2395"
+      }
+    },
+    "owner": "ahmousavi39"
+  }
+}

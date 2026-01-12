@@ -1,53 +1,93 @@
-# App Template - Expo React Native
+# TransIntel - Intelligent Translation App
 
-This template provides a complete starting point for building React Native apps with Expo, featuring:
+TransIntel is a powerful AI-powered translation app built with Expo and React Native, featuring support for 110+ languages with intelligent features like auto-detection, synonym suggestions, and file translation.
 
-- ✅ Light/Dark theme support with persistent preferences
-- ✅ File-based routing with Expo Router
-- ✅ TypeScript configuration
-- ✅ Reusable themed components
-- ✅ Custom alert system
-- ✅ Professional UI/UX patterns
-- ✅ AsyncStorage integration
-- ✅ Cross-platform support (iOS, Android, Web)
-- ✅ Website template with Privacy Policy and Terms of Use
+## ✨ Features
+
+- 🌍 **110+ Languages** - Comprehensive language support
+- 🔍 **Auto-Detection** - Automatically detect source language
+- 💡 **Smart Alternatives** - Multiple translation options with synonyms
+- 📄 **File Translation** - Translate text from images, PDFs, and audio
+- 🌐 **RTL Support** - Full support for Arabic, Hebrew, Persian, etc.
+- ⚡ **AI-Powered** - Uses Google Gemini AI for accurate translations
+- 🎨 **Dark Mode** - Beautiful light and dark themes
+- 💾 **Saved Preferences** - Remembers your language selections
 
 ## 🚀 Getting Started
 
-1. **Copy this template** to your new project location
-2. **Install dependencies**:
+### Prerequisites
+- Node.js 18+ installed
+- Expo CLI installed globally: `npm install -g expo-cli`
+- iOS Simulator (Mac) or Android Emulator
+- Google Gemini API key
+
+### Installation
+
+1. **Clone and install frontend dependencies**:
    ```bash
+   cd frontend
    npm install
    ```
-3. **Update app.json** with your app name and details
-4. **Update Website/** folder with your app information
-5. **Start development**:
+
+2. **Install backend dependencies**:
    ```bash
+   cd backend
+   npm install
+   ```
+
+3. **Configure environment**:
+   - Create `backend/.env` file
+   - Add your Gemini API key: `GEMINI_API_KEY=your_key_here`
+
+4. **Update API URL** (if needed):
+   - In `frontend/app/index.tsx`, update the API URL from `https://transintel.onrender.com` to your backend URL
+
+### Running the App
+
+1. **Start the backend**:
+   ```bash
+   cd backend
    npm start
    ```
+
+2. **Start the frontend** (in a new terminal):
+   ```bash
+   cd frontend
+   npm start
+   ```
+
+3. **Run on device**:
+   - Press `i` for iOS Simulator
+   - Press `a` for Android Emulator
+   - Scan QR code with Expo Go app on physical device
 
 ## 📁 Project Structure
 
 ```
-app/
-  _layout.tsx          # Root layout with theme provider
-  index.tsx            # Home screen
-  (tabs)/              # Tab navigation screens
-    index.tsx          # Main tab screen
-    _layout.tsx        # Tab navigator
-constants/
-  colors.ts            # Theme color definitions
-  theme.ts             # Legacy theme constants (optional)
-contexts/
-  ThemeContext.tsx     # Theme management context
-components/
-  CustomAlert.tsx      # Custom alert dialog
-  SettingsModal.tsx    # Settings modal template
-  themed-text.tsx      # Themed text component
-  themed-view.tsx      # Themed view component
-services/
-  storage.ts           # AsyncStorage utilities
-types/
+frontend/
+  app/
+    index.tsx          # Main translation screen
+    _layout.tsx        # Root layout with theme
+    (tabs)/            # Tab navigation
+  components/
+    CustomAlert.tsx    # Custom alert dialogs
+    SettingsModal.tsx  # Settings screen
+  constants/
+    colors.ts          # Theme colors
+  contexts/
+    ThemeContext.tsx   # Theme management
+  services/
+    storage.ts         # Local storage utilities
+
+backend/
+  server.js            # Express server with Gemini AI integration
+  .env                 # Environment variables (create this)
+
+Website/
+  index.html           # Landing page
+  policy.html          # Privacy policy
+  terms.html           # Terms of use
+```
   app.ts               # TypeScript type definitions
 Website/
   index.html           # Landing page

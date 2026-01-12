@@ -54,8 +54,8 @@ export default function SettingsModal({ visible, onClose }: SettingsModalProps) 
 
   const handleAbout = () => {
     setAlertConfig({
-      title: 'About This App',
-      message: 'Your app description goes here. Update this in SettingsModal.tsx',
+      title: 'About TransIntel',
+      message: 'TransIntel v1.0.0\n\nA powerful translation app supporting 110+ languages with intelligent features:\n\n• Auto language detection\n• Multiple translation alternatives\n• Synonym suggestions\n• File translation (text, images, PDFs, audio)\n• Right-to-left language support\n\nPowered by Google Gemini AI\n\nDeveloped by Amir Hossain Mousavi\n\n© 2026 TransIntel. All rights reserved.',
       icon: 'info',
       buttons: [{ text: 'OK' }],
     });
@@ -63,11 +63,11 @@ export default function SettingsModal({ visible, onClose }: SettingsModalProps) 
   };
 
   const handlePrivacyPolicy = () => {
-    Linking.openURL('https://your-website.com/policy.html');
+    Linking.openURL('https://transintel.onrender.com/policy.html');
   };
 
   const handleTerms = () => {
-    Linking.openURL('https://your-website.com/terms.html');
+    Linking.openURL('https://transintel.onrender.com/terms.html');
   };
 
   return (

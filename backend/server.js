@@ -13,7 +13,25 @@ const PORT = process.env.PORT || 3001;
 // Configure multer for file uploads (store in memory)
 const upload = multer({ 
   storage: multer.memoryStorage(),
-  limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
+  limits: { 
+    fileSize: 10 * 1024 * 1024, // 10MB limit
+    files: 1
+  },
+  fileFilter: (req, file, cb) => {
+    const allowedMimes = [
+      'image/png', 'image/jpeg', 'image/jpg', 'image/webp', 
+      'image/heic', 'image/heif',
+      'application/pdf',
+      'audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/aac',
+      'audio/flac', 'audio/ogg', 'audio/aiff',
+      'text/plain', 'text/csv'
+    ];
+    if (allowedMimes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Unsupported file type'), false);
+    }
+  }
 });
 
 // Middleware
@@ -25,7 +43,36 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const fileManager = new GoogleAIFileManager(process.env.GEMINI_API_KEY);
 
 // Use gemini-2.5-flash-lite which supports text, images, video, audio, and PDFs
-const DEFAULT_MODEL = 'gemini-2.5-flash-lite';
+const DEFAULT_MODEL = process.env.MODEL || 'gemini-2.5-flash-lite';
+
+// Cache configuration for model
+const modelConfig = {
+  model: DEFAULT_MODEL,
+  generationConfig: {
+    temperature: 0.1, // Very low for consistent, accurate translations
+    topP: 0.95,
+    topK: 40,
+    maxOutputTokens: 8192,
+  },
+};
+
+// Request cache to prevent duplicate translations
+const translationCache = new Map();
+const CACHE_MAX_SIZE = 1000;
+const CACHE_TTL = 3600000; // 1 hour
+
+// Helper to generate cache key
+function getCacheKey(text, sourceLang, targetLang) {
+  return `${text}|${sourceLang}|${targetLang}`;
+}
+
+// Helper to manage cache size
+function pruneCache() {
+  if (translationCache.size > CACHE_MAX_SIZE) {
+    const firstKey = translationCache.keys().next().value;
+    translationCache.delete(firstKey);
+  }
+}
 
 // Language name mapping
 const LANGUAGE_NAMES = {
@@ -73,14 +120,15 @@ app.post('/translate', async (req, res) => {
       });
     }
 
-    const model = genAI.getGenerativeModel({ 
-      model: DEFAULT_MODEL,
-      generationConfig: {
-        temperature: 0.3, // Lower temperature for more accurate, deterministic translations
-        topP: 0.8,
-        topK: 40,
-      },
-    });
+    // Check cache first
+    const cacheKey = getCacheKey(text, sourceLanguage, targetLanguage);
+    const cached = translationCache.get(cacheKey);
+    if (cached && (Date.now() - cached.timestamp < CACHE_TTL)) {
+      console.log('✓ Cache hit - returning cached translation');
+      return res.json(cached.data);
+    }
+
+    const model = genAI.getGenerativeModel(modelConfig);
     
     let detectedLanguage = sourceLanguage;
     let sourceLang = LANGUAGE_NAMES[sourceLanguage] || sourceLanguage;
@@ -88,12 +136,16 @@ app.post('/translate', async (req, res) => {
     
     // If auto detect, first detect the language
     if (sourceLanguage === 'auto') {
-      const detectPrompt = `Detect the language of the following text and respond with ONLY the ISO 639-1 two-letter language code (e.g., "en" for English, "es" for Spanish, "fr" for French, "de" for German, etc.). Respond with just the code, nothing else:\n\n${text}`;
+      const detectPrompt = `Identify the language of this text. Respond ONLY with the ISO 639-1 two-letter code (e.g., en, es, fr, de, zh, ja, ar, hi, pt, ru).
+
+Text: "${text}"
+
+Respond with ONLY the 2-letter code, nothing else.`;
       
       console.log('Running language detection...');
       try {
         const detectResult = await model.generateContent(detectPrompt);
-        const detectedCode = detectResult.response.text().trim().toLowerCase();
+        const detectedCode = detectResult.response.text().trim().toLowerCase().replace(/[^a-z]/g, '');
         
         console.log('Detected language code:', detectedCode);
         
@@ -119,30 +171,33 @@ app.post('/translate', async (req, res) => {
     console.log('Word count:', wordCount);
     
     if (wordCount <= 2) {
-      prompt = `For the word/phrase "${text}" in ${sourceLang}:
+      prompt = `Task: Analyze "${text}" (${sourceLang})
 
-Provide ONLY the following format with NO additional text, explanations, or commentary:
-1. First line: 2-3 synonyms in ${sourceLang} separated by commas
-2. Second line: the text "TRANSLATIONS:"
-3. Third line: alternative translations to ${targetLang} separated by semicolons
+Output format (STRICT - no additional text):
+Line 1: 2-3 ${sourceLang} synonyms (comma-separated)
+Line 2: TRANSLATIONS:
+Line 3: 3-4 ${targetLang} translations (semicolon-separated, ordered from most to least common)
 
-Format example (follow this EXACTLY):
-happy, joyful, content
+Example format:
+happy, joyful, cheerful
 TRANSLATIONS:
 feliz; contento; alegre
 
-Do NOT include any explanations, notes, or additional text. ONLY the three lines as shown.`;
+Provide ONLY these 3 lines. No explanations, notes, or extra text.`;
     } else {
-      prompt = `You are a professional translator. Translate the following text from ${sourceLang} to ${targetLang}.
+      prompt = `Task: Professional translation from ${sourceLang} to ${targetLang}
+
+Text:
+${text}
 
 Rules:
-- Preserve the original meaning and tone
-- Maintain natural ${targetLang} grammar and idioms
-- Keep formatting (line breaks, punctuation)
-- Provide ONLY the translation, no explanations
+- Preserve exact meaning, tone, and intent
+- Use natural ${targetLang} expressions and idioms
+- Maintain formatting (line breaks, punctuation, emphasis)
+- Match formality level of source
+- For technical/specialized terms, use standard ${targetLang} equivalents
 
-Text to translate:
-${text}`;
+Output: ONLY the translated text, no explanations or metadata.`;
     }
 
     console.log('\n--- PROMPT SENT TO GEMINI ---');
@@ -195,16 +250,24 @@ ${text}`;
         console.log(JSON.stringify(responseData, null, 2));
         console.log('========================================\n');
         
+        // Cache the result
+        pruneCache();
+        translationCache.set(cacheKey, {
+          data: responseData,
+          timestamp: Date.now()
+        });
+        
         return res.json(responseData);
         
       } catch (error) {
         lastError = error;
         const retryableErrors = [429, 500, 503, 504];
-        const isRetryable = error.status && retryableErrors.includes(error.status);
+        const errorStatus = error.status || (error.message?.includes('429') ? 429 : 500);
+        const isRetryable = retryableErrors.includes(errorStatus);
         
         if (isRetryable && attempt < 2) {
-          const delay = Math.pow(2, attempt) * 1000;
-          console.log(`Retry attempt ${attempt + 1} after ${delay}ms`);
+          const delay = Math.pow(2, attempt) * 1000; // Exponential backoff
+          console.log(`⚠️  Error ${errorStatus}: Retry ${attempt + 1} after ${delay}ms`);
           await new Promise(resolve => setTimeout(resolve, delay));
           continue;
         }
@@ -215,8 +278,24 @@ ${text}`;
     throw lastError;
   } catch (error) {
     console.error('Translation error:', error);
-    res.status(500).json({ 
-      error: 'Translation failed', 
+    
+    // Provide user-friendly error messages
+    let errorMessage = 'Translation failed';
+    let statusCode = 500;
+    
+    if (error.message?.includes('API key')) {
+      errorMessage = 'Invalid API key';
+      statusCode = 401;
+    } else if (error.message?.includes('quota') || error.status === 429) {
+      errorMessage = 'API quota exceeded. Please try again later.';
+      statusCode = 429;
+    } else if (error.message?.includes('timeout')) {
+      errorMessage = 'Translation timeout. Please try a shorter text.';
+      statusCode = 504;
+    }
+    
+    res.status(statusCode).json({ 
+      error: errorMessage, 
       details: error.message 
     });
   }
@@ -278,7 +357,7 @@ app.post('/extract-text', upload.single('file'), async (req, res) => {
       });
     }
 
-    const model = genAI.getGenerativeModel({ model: DEFAULT_MODEL });
+    const model = genAI.getGenerativeModel(modelConfig);
     const mimeType = req.file.mimetype;
     
     // Check if it's a text-based format we can handle directly
@@ -331,14 +410,39 @@ app.post('/extract-text', upload.single('file'), async (req, res) => {
     
     console.log(`File ready: ${file.uri}`);
 
-    // Handle different file types
+    // Handle different file types with optimized prompts
     let prompt;
     if (mimeType.startsWith('image/')) {
-      prompt = "Extract all text from this image. Return only the extracted text content, without any additional explanation, formatting, or metadata.";
+      prompt = `Task: OCR text extraction from image
+
+Instructions:
+- Extract ALL visible text exactly as it appears
+- Preserve line breaks, spacing, and text layout
+- Include text from all regions (headers, body, captions, labels)
+- Maintain punctuation and formatting
+
+Output: ONLY the extracted text, no descriptions or metadata.`;
     } else if (mimeType === 'application/pdf') {
-      prompt = "Extract all text from this PDF document. Return only the extracted text content, without any additional explanation, formatting, or metadata.";
+      prompt = `Task: Extract text from PDF document
+
+Instructions:
+- Extract ALL text content in reading order
+- Preserve paragraph breaks and structure
+- Maintain formatting (bold, italic) if significant
+- Include headers, footers, and page content
+
+Output: ONLY the extracted text, no metadata or page numbers unless they're part of content.`;
     } else if (mimeType.startsWith('audio/')) {
-      prompt = "Transcribe this audio file. Return only the transcribed text, without any additional explanation or metadata.";
+      prompt = `Task: Audio transcription
+
+Instructions:
+- Transcribe ALL spoken words accurately
+- Use proper punctuation and capitalization
+- Indicate speaker changes if multiple speakers
+- Preserve meaning and context
+- Use [inaudible] for unclear segments
+
+Output: ONLY the transcribed text, no timestamps or metadata.`;
     } else {
       return res.status(400).json({ 
         error: 'Unsupported file type',
@@ -382,10 +486,31 @@ app.post('/extract-text', upload.single('file'), async (req, res) => {
   }
 });
 
+// Graceful shutdown handler
+process.on('SIGTERM', () => {
+  console.log('\n⏹️  SIGTERM received, shutting down gracefully...');
+  translationCache.clear();
+  process.exit(0);
+});
+
+process.on('SIGINT', () => {
+  console.log('\n⏹️  SIGINT received, shutting down gracefully...');
+  translationCache.clear();
+  process.exit(0);
+});
+
 app.listen(PORT, () => {
-  console.log(`🚀 Translation server running on http://localhost:${PORT}`);
+  console.log(`\n${'='.repeat(50)}`);
+  console.log(`🚀 TransIntel Backend Server`);
+  console.log(`${'='.repeat(50)}`);
+  console.log(`📡 Server: http://localhost:${PORT}`);
+  console.log(`🤖 Model: ${DEFAULT_MODEL}`);
+  console.log(`💾 Cache: Enabled (max ${CACHE_MAX_SIZE} entries)`);
+  console.log(`🔑 API Key: ${process.env.GEMINI_API_KEY ? '✓ Configured' : '✗ Missing'}`);
+  console.log(`${'='.repeat(50)}\n`);
+  
   if (!process.env.GEMINI_API_KEY) {
     console.warn('⚠️  Warning: GEMINI_API_KEY not found in .env file');
-    console.log('📝 Get your API key from: https://makersuite.google.com/app/apikey');
+    console.log('📝 Get your API key from: https://aistudio.google.com/app/apikey\n');
   }
 });
