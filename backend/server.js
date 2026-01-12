@@ -18,17 +18,39 @@ const upload = multer({
     files: 1
   },
   fileFilter: (req, file, cb) => {
+    console.log('File filter check - MIME type:', file.mimetype);
+    console.log('File filter check - Original name:', file.originalname);
+    
     const allowedMimes = [
       'image/png', 'image/jpeg', 'image/jpg', 'image/webp', 
       'image/heic', 'image/heif',
       'application/pdf',
       'audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/aac',
       'audio/flac', 'audio/ogg', 'audio/aiff',
-      'text/plain', 'text/csv'
+      'audio/x-aiff', 'audio/x-wav', 'audio/x-m4a', 'audio/mp4',
+      'text/plain', 'text/csv',
+      // Add common variations and mobile-specific types
+      'image/pjpeg', 'image/x-png',
+      'application/octet-stream', // Generic binary, check extension
     ];
+    
+    // Check if MIME type is allowed
     if (allowedMimes.includes(file.mimetype)) {
+      console.log('✓ File type accepted:', file.mimetype);
       cb(null, true);
     } else {
+      // If it's octet-stream, check file extension
+      if (file.mimetype === 'application/octet-stream' && file.originalname) {
+        const ext = file.originalname.toLowerCase().split('.').pop();
+        const allowedExts = ['jpg', 'jpeg', 'png', 'webp', 'heic', 'heif', 'pdf', 'mp3', 'wav', 'aac', 'flac', 'ogg', 'aiff', 'txt', 'csv'];
+        if (allowedExts.includes(ext)) {
+          console.log('✓ File type accepted by extension:', ext);
+          cb(null, true);
+          return;
+        }
+      }
+      
+      console.error('✗ File type rejected:', file.mimetype);
       cb(new Error('Unsupported file type'), false);
     }
   }
