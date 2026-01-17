@@ -1073,7 +1073,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 6,
     marginBottom: 12,
-    minHeight: 240,
+    minHeight: 320,
   },
   panel: {
     flex: 1,
@@ -1101,13 +1101,13 @@ const styles = StyleSheet.create({
     shadowRadius: 3,
   },
   textInput: {
-    height: 160,
+    flex: 1,
     fontSize: 16,
     textAlignVertical: 'top',
     padding: 0,
   },
   textOutput: {
-    height: 160,
+    flex: 1,
     padding: 0,
   },
   outputText: {

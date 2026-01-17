@@ -63,11 +63,11 @@ export default function SettingsModal({ visible, onClose }: SettingsModalProps) 
   };
 
   const handlePrivacyPolicy = () => {
-    Linking.openURL('https://transintel.onrender.com/policy.html');
+    Linking.openURL('https://transintel.ahmousavi.com/policy');
   };
 
   const handleTerms = () => {
-    Linking.openURL('https://transintel.onrender.com/terms.html');
+    Linking.openURL('https://transintel.ahmousavi.com/terms');
   };
 
   return (
